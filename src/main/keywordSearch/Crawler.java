@@ -5,11 +5,14 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import utils.Pair;
 
+
 public class Crawler extends Thread{
     static String resultPath = "results.txt";
+    static String result2 = "results2.txt";
     static String crawlPath = "output";
     Set<String> crawledFiles;
     static ConcurrentHashMap<String, List<Pair<String, Integer>>> resultData = new ConcurrentHashMap<>();
@@ -31,16 +34,22 @@ public class Crawler extends Thread{
                         crawlSingleFile(filename);
                     });
                 });
-                executorService.shutdown();
-                updateResult();
 
+                executorService.shutdown();
+                executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                updateResult();
                 Thread.sleep(10_000);
+                synchronized (resultPath){
+                    synchronized (result2){
+                        String temp=result2;
+                        result2=resultPath;
+                        resultPath=temp;
+                    }
+                }
             }
             catch (Exception e){
                 ;
             }
-
-
         }
     }
 
@@ -84,6 +93,36 @@ public class Crawler extends Thread{
 
     private void updateResult() {
         File file = new File(resultPath);
+        File outputFile = new File(result2);
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file));
+             BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Write the current line to results2.txt
+                writer.write(line);
+                writer.newLine();
+
+                // Extract the keyword (the first word before the colon)
+                String keyword = line.split(":")[0].trim();
+
+                // Check if the keyword exists in the hashmap
+                if (resultData.containsKey(keyword)) {
+                    writer.write(formatValue(resultData.get(keyword)));
+                    resultData.remove(keyword);
+                }
+            }
+
+            for (Map.Entry<String, List<Pair<String, Integer>>> entry : resultData.entrySet()) {
+                writer.write(entry.getKey() + ":" + formatValue(entry.getValue()));
+                writer.newLine();
+            }
+            writer.flush();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         try (BufferedWriter bf = new BufferedWriter(new FileWriter(file))) {
             for (Map.Entry<String, List<Pair<String, Integer>>> entry : resultData.entrySet()) {
