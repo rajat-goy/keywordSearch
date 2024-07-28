@@ -40,10 +40,10 @@ public class Crawler extends Thread {
                 executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
                 if (!resultData.isEmpty()) {
                     updateResult();
-                    Thread.sleep(10_000);
-
                     newFilesList.forEach(file -> crawledFiles.add(file));
                     StaticVarManger.swapResultPaths();
+
+                    Thread.sleep(10_000);
                 }
 
 
@@ -104,7 +104,6 @@ public class Crawler extends Thread {
             while ((line = reader.readLine()) != null) {
                 // Write the current line to results2.txt
                 writer.write(line);
-                writer.newLine();
 
                 // Extract the keyword (the first word before the colon)
                 String keyword = line.split(":")[0].trim();
@@ -114,6 +113,7 @@ public class Crawler extends Thread {
                     writer.write(formatValue(resultData.get(keyword)));
                     resultData.remove(keyword);
                 }
+                writer.newLine();
             }
 
             for (Map.Entry<String, List<Pair<String, Integer>>> entry : resultData.entrySet()) {

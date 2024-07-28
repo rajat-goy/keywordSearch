@@ -1,9 +1,15 @@
 package utils;
 
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 public class StaticVarManger {
     static String resultPath = "results.txt";
     static String result2 = "results2.txt";
     static String crawlPath = "output";
+
+    public static ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
+    public static ConcurrentHashMap<Integer, String> resultMap;
     static final Object lock = new Object();
 
     static Integer queryId=0;

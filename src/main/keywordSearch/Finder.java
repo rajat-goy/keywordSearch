@@ -11,23 +11,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Finder implements Runnable {
-    private final ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
-    private final String filePath;
-    private final ConcurrentHashMap<Integer, String> resultMap;
 
-    Finder(ConcurrentLinkedQueue<Pair<Integer, String>> tokens, String filePath, ConcurrentHashMap<Integer, String> resultMap) {
-        this.tokens = tokens;
-        this.filePath = filePath;
-        this.resultMap = resultMap;
+
+    Finder() {
+
     }
 
     @Override
     public void run() {
         while (true) {
             try {
-                Pair<Integer, String> query = tokens.poll();
+                Pair<Integer, String> query = StaticVarManger.tokens.poll();
                 if(query == null) {
-                        tokens.wait();
+                        Thread.sleep(500);
                         continue;
                 }
                 File file = new File(StaticVarManger.getResultPath());
@@ -35,14 +31,14 @@ public class Finder implements Runnable {
                 BufferedReader br = new BufferedReader(fr);
                 String line;
                 while ((line = br.readLine()) != null) {
-                    String[] lineArr = line.split(":", 1);
+                    String[] lineArr = line.split(":", 2);
                     if (lineArr[0].equalsIgnoreCase(query.getSecond())) {
-                        resultMap.put(query.getFirst(), lineArr[1]);
+                        StaticVarManger.resultMap.put(query.getFirst(), lineArr[1]);
                         break;
                     }
                 }
-                if (!resultMap.containsKey(query.getFirst()))
-                    resultMap.put(query.getFirst(), "Not Found");
+                if (!StaticVarManger.resultMap.containsKey(query.getFirst()))
+                    StaticVarManger.resultMap.put(query.getFirst(), "Not Found");
             } catch (InterruptedException | IOException e) {
                 e.printStackTrace();
             }

@@ -14,28 +14,29 @@ public class Executor {
     private static final int NEW_QUERY = 1;
     private static final int CHECK_RESULT = 2;
     private static final int EXIT_CONSOLE = 3;
-    private static ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
-    private static String filePath;
-    private static ConcurrentHashMap<Integer, String> resultMap;
 
     public static void inputQuery(String keyword) {
 
         Integer queryId = StaticVarManger.getQueryId();
-        tokens.add(new Pair(queryId,keyword));
+        StaticVarManger.tokens.add(new Pair(queryId,keyword));
         System.out.println("Query Id for "+keyword+" is : "+queryId.toString());
-        tokens.notifyAll();
     }
 
-    public static void outputResult(int queryId) {
-
+    public static void outputResult(Integer queryId) {
+        if(StaticVarManger.resultMap.containsKey(queryId)){
+            System.out.println("Result for "+queryId.toString()+" is: "+StaticVarManger.resultMap.get(queryId));
+        }
+        else{
+            System.out.println("Result for "+queryId.toString()+" is not computed yet. Check again! ");
+        }
     }
 
     public static void main(String[] args) {
 
-        tokens = new ConcurrentLinkedQueue<>();
-        resultMap = new ConcurrentHashMap<>();
+        StaticVarManger.tokens = new ConcurrentLinkedQueue<>();
+        StaticVarManger.resultMap = new ConcurrentHashMap<>();
         Crawler crawler = new Crawler();
-        Finder finder = new Finder(tokens, filePath, resultMap);
+        Finder finder = new Finder();
 
 
         ExecutorService executor = Executors.newFixedThreadPool(5);
@@ -47,21 +48,24 @@ public class Executor {
         Scanner scanner = new Scanner(System.in);
 
         while (true) {
-            int type = scanner.nextInt();
 
+            System.out.println("Enter 1 for New Query, 2 for checking Query Results & 3 to Exit the console");
+            int type = scanner.nextInt();
             switch (type) {
                 case NEW_QUERY:
+                    System.out.println("Enter a Keyword to Query");
                     String keywordToSearch = scanner.next();
                     inputQuery(keywordToSearch);
                     break;
                 case CHECK_RESULT:
+                    System.out.println("Enter Query Id to check Result");
                     int queryId = scanner.nextInt();
                     outputResult(queryId);
                     break;
 
                 case EXIT_CONSOLE:
                     System.out.println("Exiting Program...");
-                    executor.shutdown();
+                    executor.shutdownNow();
                     System.exit(0);
                     break;
 
