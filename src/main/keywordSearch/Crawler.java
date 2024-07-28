@@ -1,4 +1,5 @@
 package keywordSearch;
+
 import java.io.*;
 
 import java.util.*;
@@ -7,24 +8,24 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import utils.StaticVarManger;
 import utils.Pair;
 
 
-public class Crawler extends Thread{
-    static String resultPath = "results.txt";
-    static String result2 = "results2.txt";
-    static String crawlPath = "output";
+public class Crawler extends Thread {
     Set<String> crawledFiles;
     static ConcurrentHashMap<String, List<Pair<String, Integer>>> resultData = new ConcurrentHashMap<>();
+
     // keyword: pairs<file, line>
     // output: list of line, file with keyword using multithreading
 
     Crawler() {
         crawledFiles = new HashSet<>();
     }
-    public void run()
-    {
-        while(true) {
+
+    public void run() {
+        while (true) {
             try {
                 ExecutorService executorService = Executors.newCachedThreadPool();
                 List<String> newFilesList = getNewFiles();
@@ -37,29 +38,28 @@ public class Crawler extends Thread{
 
                 executorService.shutdown();
                 executorService.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
-                updateResult();
-                Thread.sleep(10_000);
-                synchronized (resultPath){
-                    synchronized (result2){
-                        String temp=result2;
-                        result2=resultPath;
-                        resultPath=temp;
-                    }
+                if (!resultData.isEmpty()) {
+                    updateResult();
+                    Thread.sleep(10_000);
+
+                    newFilesList.forEach(file -> crawledFiles.add(file));
+                    StaticVarManger.swapResultPaths();
                 }
-            }
-            catch (Exception e){
+
+
+            } catch (Exception e) {
                 ;
             }
         }
     }
 
     private List<String> getNewFiles() {
-        File directory = new File(crawlPath);
+        File directory = new File(StaticVarManger.getCrawlPath());
         File[] files = directory.listFiles();
         List<String> newFilesList = new ArrayList<String>();
 
 
-        if(files != null) {
+        if (files != null) {
             newFilesList = Arrays.stream(files)
                     .map(File::getName)
                     .filter(fileName -> !crawledFiles.contains((fileName)))
@@ -68,12 +68,14 @@ public class Crawler extends Thread{
 
         return newFilesList;
     }
+
     private void addToHashmap(String keyword, String fileName, Integer lineno) {
-        resultData.putIfAbsent(keyword, Collections.synchronizedList(new ArrayList<Pair<String,Integer>>()));
-        resultData.get(keyword).add(new Pair(fileName,lineno));
+        resultData.putIfAbsent(keyword, Collections.synchronizedList(new ArrayList<Pair<String, Integer>>()));
+        resultData.get(keyword).add(new Pair(fileName, lineno));
     }
+
     private void crawlSingleFile(String fileName) {
-        String targetPath = crawlPath + "/" + fileName;
+        String targetPath = StaticVarManger.getCrawlPath() + "/" + fileName;
         try (BufferedReader reader = new BufferedReader(new FileReader(targetPath))) {
             String line;
             int lineNumber = 0;
@@ -92,8 +94,8 @@ public class Crawler extends Thread{
     }
 
     private void updateResult() {
-        File file = new File(resultPath);
-        File outputFile = new File(result2);
+        File file = new File(StaticVarManger.getResultPath());
+        File outputFile = new File(StaticVarManger.getResult2());
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file));
              BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
@@ -133,6 +135,7 @@ public class Crawler extends Thread{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        resultData.clear();
     }
 
     private String formatValue(List<Pair<String, Integer>> pairs) {

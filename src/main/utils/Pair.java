@@ -1,4 +1,5 @@
 package utils;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -12,7 +13,7 @@ public class Pair<F, S> implements Serializable {
         this.second = second;
     }
 
-    public Pair(Pair<F,S> pair) {
+    public Pair(Pair<F, S> pair) {
         this.first = pair.first;
         this.second = pair.second;
     }
