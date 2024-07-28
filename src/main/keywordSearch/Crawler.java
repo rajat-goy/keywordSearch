@@ -1,20 +1,16 @@
 package keywordSearch;
-import java.io.BufferedReader;
-import java.io.File;
+import java.io.*;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import utils.Pair;
 
 public class Crawler extends Thread{
-    static String filePath = "../../results.txt";
-    static String crawlPath = "../../output";
+    static String resultPath = "results.txt";
+    static String crawlPath = "output";
     Set<String> crawledFiles;
     static ConcurrentHashMap<String, List<Pair<String, Integer>>> resultData = new ConcurrentHashMap<>();
     // keyword: pairs<file, line>
@@ -25,15 +21,24 @@ public class Crawler extends Thread{
     }
     public void run()
     {
-        ExecutorService executorService = Executors.newCachedThreadPool();
         while(true) {
-            List<String> newFilesList = getNewFiles();
+            try {
+                ExecutorService executorService = Executors.newCachedThreadPool();
+                List<String> newFilesList = getNewFiles();
 
-            newFilesList.forEach(filename -> {
-                executorService.submit(() -> {
-                    crawlSingleFile(filename);
+                newFilesList.forEach(filename -> {
+                    executorService.submit(() -> {
+                        crawlSingleFile(filename);
+                    });
                 });
-            });
+                executorService.shutdown();
+                updateResult();
+
+                Thread.sleep(10_000);
+            }
+            catch (Exception e){
+                ;
+            }
 
 
         }
@@ -43,6 +48,7 @@ public class Crawler extends Thread{
         File directory = new File(crawlPath);
         File[] files = directory.listFiles();
         List<String> newFilesList = new ArrayList<String>();
+
 
         if(files != null) {
             newFilesList = Arrays.stream(files)
@@ -74,6 +80,28 @@ public class Crawler extends Thread{
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void updateResult() {
+        File file = new File(resultPath);
+
+        try (BufferedWriter bf = new BufferedWriter(new FileWriter(file))) {
+            for (Map.Entry<String, List<Pair<String, Integer>>> entry : resultData.entrySet()) {
+                bf.write(entry.getKey() + ":" + formatValue(entry.getValue()));
+                bf.newLine();
+            }
+            bf.flush();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private String formatValue(List<Pair<String, Integer>> pairs) {
+        StringBuilder sb = new StringBuilder();
+        for (Pair<String, Integer> pair : pairs) {
+            sb.append("<").append(pair.getFirst()).append(", ").append(pair.getSecond()).append("> ");
+        }
+        return sb.toString().trim();
     }
 
 }
