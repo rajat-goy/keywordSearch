@@ -15,18 +15,15 @@ public class Executor {
     private static final int CHECK_RESULT = 2;
     private static final int EXIT_CONSOLE = 3;
     private static ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
-    public static Object monitor;
+    private static String filePath;
     private static ConcurrentHashMap<Integer, String> resultMap;
-
-    private static Finder finder;
-    private static Crawler crawler;
 
     public static void inputQuery(String keyword) {
 
         Integer queryId = StaticVarManger.getQueryId();
-        finder.tokens.add(new Pair(queryId,keyword));
+        tokens.add(new Pair(queryId,keyword));
         System.out.println("Query Id for "+keyword+" is : "+queryId.toString());
-        monitor.notifyAll();
+        tokens.notifyAll();
     }
 
     public static void outputResult(int queryId) {
@@ -36,10 +33,9 @@ public class Executor {
     public static void main(String[] args) {
 
         tokens = new ConcurrentLinkedQueue<>();
-        monitor = new Object();
         resultMap = new ConcurrentHashMap<>();
-        crawler = new Crawler();
-        finder = new Finder(tokens, monitor, resultMap);
+        Crawler crawler = new Crawler();
+        Finder finder = new Finder(tokens, filePath, resultMap);
 
 
         ExecutorService executor = Executors.newFixedThreadPool(5);

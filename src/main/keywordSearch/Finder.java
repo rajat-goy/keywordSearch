@@ -11,13 +11,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Finder implements Runnable {
-    public final ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
-    public final Object monitor;
-    public final ConcurrentHashMap<Integer, String> resultMap;
+    private final ConcurrentLinkedQueue<Pair<Integer, String>> tokens;
+    private final String filePath;
+    private final ConcurrentHashMap<Integer, String> resultMap;
 
-    Finder(ConcurrentLinkedQueue<Pair<Integer, String>> tokens, Object monitor,ConcurrentHashMap<Integer, String> resultMap) {
+    Finder(ConcurrentLinkedQueue<Pair<Integer, String>> tokens, String filePath, ConcurrentHashMap<Integer, String> resultMap) {
         this.tokens = tokens;
-        this.monitor = monitor;
+        this.filePath = filePath;
         this.resultMap = resultMap;
     }
 
@@ -26,11 +26,9 @@ public class Finder implements Runnable {
         while (true) {
             try {
                 Pair<Integer, String> query = tokens.poll();
-                if (query == null) {
-                    synchronized (this.monitor) {
-                        this.monitor.wait();
+                if(query == null) {
+                        tokens.wait();
                         continue;
-                    }
                 }
                 File file = new File(StaticVarManger.getResultPath());
                 FileReader fr = new FileReader(file);
