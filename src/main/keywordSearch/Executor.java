@@ -11,6 +11,14 @@ public class Executor {
     private static Finder finder;
     private static Crawler crawler;
 
+    public static void inputQuery(String keyword){
+
+    }
+
+    public static void outputResult(int queryId){
+
+    }
+
     public static void main(String[] args) {
         crawler = new Crawler();
         finder = new Finder();
@@ -24,9 +32,11 @@ public class Executor {
             switch (type) {
                 case NEW_QUERY:
                     String keywordToSearch = scanner.next();
+                    inputQuery(keywordToSearch);
                     break;
                 case CHECK_RESULT:
                     int queryId = scanner.nextInt();
+                    outputResult(queryId);
                     break;
 
                 case EXIT_CONSOLE:

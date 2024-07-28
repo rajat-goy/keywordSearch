@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -15,7 +16,7 @@ public class Crawler extends Thread{
     static String filePath = "../../results.txt";
     static String crawlPath = "../../output";
     Set<String> crawledFiles;
-    HashMap<String, List<Pair<String, Integer>>> resultData = new HashMap<>();
+    static ConcurrentHashMap<String, List<Pair<String, Integer>>> resultData = new ConcurrentHashMap<>();
     // keyword: pairs<file, line>
     // output: list of line, file with keyword using multithreading
 
@@ -53,7 +54,8 @@ public class Crawler extends Thread{
         return newFilesList;
     }
     private void addToHashmap(String keyword, String fileName, Integer lineno) {
-
+        resultData.putIfAbsent(keyword, Collections.synchronizedList(new ArrayList<Pair<String,Integer>>()));
+        resultData.get(keyword).add(new Pair(fileName,lineno));
     }
     private void crawlSingleFile(String fileName) {
         String targetPath = crawlPath + "/" + fileName;
